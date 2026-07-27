@@ -1,0 +1,35 @@
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Temporary & Upload Folders (Keep directory structure via .gitkeep)
+uploads/*
+!uploads/.gitkeep
+temp/*
+!temp/.gitkeep
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs & Output Artifacts
+*.log
+federated_vad_outputs/
+*.tfrecord
+manifest.csv
+
+# Environment & Secrets
+.env
+.env.local

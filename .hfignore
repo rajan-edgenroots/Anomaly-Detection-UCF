@@ -1,0 +1,28 @@
+# Hugging Face Space Ignore (.hfignore)
+# Prevents unnecessary files from being synced to Hugging Face Space repository
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Temporary Files & User Uploads
+uploads/*
+!uploads/.gitkeep
+temp/*
+!temp/.gitkeep
+
+# Git & IDE Configuration
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# Logs & Output Folders
+*.log
+federated_vad_outputs/

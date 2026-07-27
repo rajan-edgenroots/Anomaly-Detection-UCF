@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Anomaly Detection Platform</title>
+    <meta name="description" content="Professional surveillance video analysis platform powered by SE-ResNet18 temporal sequence model.">
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <!-- Lucide / FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Top Navigation Header -->
+        <header class="top-nav">
+            <div class="nav-container">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-video-slash"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">VAD System</span>
+                        <span class="brand-tag">Video Intelligence</span>
+                    </div>
+                </div>
+                <div class="header-status">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Engine Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Body -->
+        <main class="main-content">
+            <div class="content-container">
+                <!-- Page Title -->
+                <div class="page-header">
+                    <h2>Video Anomaly Analysis</h2>
+                    <p>Detect and locate unusual activities in surveillance streams using temporal sequence classification.</p>
+                </div>
+
+                <!-- Input Card -->
+                <section class="card input-card">
+                    <!-- Segmented Mode Control -->
+                    <div class="mode-segmented-control">
+                        <button class="segmented-btn active" id="tabUploadBtn" onclick="switchTab('upload')">
+                            <i class="fa-solid fa-file-arrow-up"></i> Upload Video File
+                        </button>
+                        <button class="segmented-btn" id="tabUrlBtn" onclick="switchTab('url')">
+                            <i class="fa-solid fa-link"></i> Direct Video URL
+                        </button>
+                    </div>
+
+                    <!-- Panel A: Drag & Drop File Upload -->
+                    <div class="input-panel active" id="panelUpload">
+                        <div class="upload-dropzone" id="dropZone">
+                            <div class="dropzone-body">
+                                <div class="dropzone-icon">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <div class="dropzone-text">
+                                    <h4>Choose a video or drag it here</h4>
+                                    <p>Supports MP4, AVI, MOV, MKV up to 500 MB</p>
+                                </div>
+                                <input type="file" id="videoFileInput" accept=".mp4,.avi,.mov,.mkv" hidden>
+                                <button class="btn btn-secondary" onclick="document.getElementById('videoFileInput').click()">
+                                    Browse Files
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Preview Badge -->
+                        <div class="selected-file-badge hidden" id="selectedFileCard">
+                            <div class="badge-left">
+                                <div class="file-type-icon">
+                                    <i class="fa-solid fa-file-video"></i>
+                                </div>
+                                <div class="badge-details">
+                                    <span class="file-name" id="selectedFileName">filename.mp4</span>
+                                    <span class="file-size" id="selectedFileSize">0 MB</span>
+                                </div>
+                            </div>
+                            <button class="icon-btn-remove" onclick="clearSelectedFile()" title="Remove video">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel B: Direct Video URL -->
+                    <div class="input-panel" id="panelUrl">
+                        <div class="url-input-container">
+                            <label for="videoUrlInput">Video File or Cloud Storage Link</label>
+                            <div class="url-field">
+                                <i class="fa-solid fa-globe field-icon"></i>
+                                <input type="url" id="videoUrlInput" placeholder="https://storage.googleapis.com/.../video.mp4" autocomplete="off">
+                            </div>
+                            <span class="field-hint">Compatible with Google Cloud Storage, signed links, and direct HTTP video streams</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary Action Button -->
+                    <div class="action-row">
+                        <button class="btn btn-primary btn-lg" id="predictBtn" onclick="submitInference()">
+                            <span class="btn-text">Analyze Video</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Status & Progress Indicator -->
+                    <div class="progress-container hidden" id="statusSection">
+                        <div class="progress-header">
+                            <div class="spinner"></div>
+                            <div class="progress-titles">
+                                <h5 id="statusTitle">Processing Video...</h5>
+                                <span id="statusMessage">Extracting temporal frames and running model</span>
+                            </div>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="progressBarFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Error Alert -->
+                    <div class="alert-error hidden" id="errorBanner">
+                        <i class="fa-solid fa-circle-exclamation alert-icon"></i>
+                        <span id="errorMessage">An error occurred while processing the video.</span>
+                        <button class="alert-dismiss" onclick="hideError()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </section>
+
+                <!-- Results Output Section -->
+                <section class="results-layout hidden" id="resultsSection">
+                    <!-- Primary Overview Header Banner -->
+                    <div class="card overview-banner" id="resultHeaderCard">
+                        <div class="overview-left">
+                            <span class="meta-label">Primary Detection</span>
+                            <h3 class="prediction-title" id="predictedClassTitle">Robbery</h3>
+                            <div class="status-badge anomaly" id="anomalyStatusBadge">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Anomaly Detected
+                            </div>
+                        </div>
+                        <div class="overview-right">
+                            <span class="meta-label">Model Confidence</span>
+                            <div class="confidence-stat" id="confidenceValue">93.4%</div>
+                        </div>
+                    </div>
+
+                    <!-- Split Grid: Top Predictions & Player -->
+                    <div class="split-grid">
+                        <!-- Top Predictions Breakdown -->
+                        <div class="card prediction-breakdown-card">
+                            <div class="card-header">
+                                <h4>Top Predictions</h4>
+                                <span class="header-sub">Probability breakdown</span>
+                            </div>
+                            <div class="top3-list" id="top3List">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Video Player Card -->
+                        <div class="card player-card">
+                            <div class="card-header">
+                                <h4>Video Playback</h4>
+                                <span class="header-sub">Synced player</span>
+                            </div>
+                            <div class="player-wrapper">
+                                <video id="outputVideoPlayer" controls preload="metadata">
+                                    <source id="videoSource" src="" type="video/mp4">
+                                    Your browser does not support HTML5 video.
+                                </video>
+                            </div>
+                            <div class="player-meta-row" id="videoMetaBar">
+                                <span><i class="fa-regular fa-clock"></i> <strong id="metaDuration">0.0s</strong></span>
+                                <span><i class="fa-solid fa-layer-group"></i> <strong id="metaSequences">0 segments</strong></span>
+                                <span><i class="fa-solid fa-gauge-simple-high"></i> <strong id="metaFps">30 fps</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Card -->
+                    <div class="card timeline-card">
+                        <div class="timeline-card-header">
+                            <div>
+                                <h4>Temporal Anomaly Timeline</h4>
+                                <p>Click any frame segment below to jump to that timestamp in the video player</p>
+                            </div>
+                        </div>
+                        <div class="timeline-track" id="timelineTrack">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-container">
+                <span>Video Anomaly Detection Platform &bull; SE-ResNet18 Sequence Model</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
